@@ -8,6 +8,9 @@ import {
   ResultsScreen,
   FinalResults,
 } from './screens';
+import { PracticePlayingScreen } from './screens/PracticePlayingScreen';
+import { PracticeScoringScreen } from './screens/PracticeScoringScreen';
+import { PracticeResultsScreen } from './screens/PracticeResultsScreen';
 
 function GameRouter() {
   const { state } = useGame();
@@ -25,6 +28,13 @@ function GameRouter() {
       return <ResultsScreen />;
     case 'final':
       return <FinalResults />;
+    // Practice Mode phases
+    case 'practice-playing':
+      return <PracticePlayingScreen />;
+    case 'practice-scoring':
+      return <PracticeScoringScreen />;
+    case 'practice-results':
+      return <PracticeResultsScreen />;
     default:
       return <MainMenu />;
   }

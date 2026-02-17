@@ -5,6 +5,7 @@ import type { GameState, GameAction } from '../types';
 const initialState: GameState = {
   phase: 'menu',
   settings: {
+    mode: 'versus',
     team1Name: '',
     team2Name: '',
     totalRounds: 7,
@@ -23,6 +24,10 @@ const initialState: GameState = {
   judgingTeam: 1,
   pendingTeam2Score: null,
   error: null,
+  // Practice mode state
+  practicePrompt: '',
+  practiceResults: [],
+  practiceStartTime: null,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -125,6 +130,66 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'SET_ERROR':
       return { ...state, error: action.payload };
+
+    // Practice Mode Actions
+    case 'START_PRACTICE':
+      return {
+        ...state,
+        phase: 'practice-playing',
+        settings: {
+          ...state.settings,
+          mode: 'practice',
+          team1Name: 'You',
+          team2Name: '',
+          totalRounds: action.payload.scenarios.length,
+          categories: action.payload.categories,
+        },
+        scenarios: action.payload.scenarios,
+        currentRound: 1,
+        practicePrompt: '',
+        practiceResults: [],
+        practiceStartTime: Date.now(),
+        error: null,
+      };
+
+    case 'SUBMIT_PRACTICE_PROMPT':
+      return {
+        ...state,
+        phase: 'practice-scoring',
+        practicePrompt: action.payload,
+      };
+
+    case 'SUBMIT_PRACTICE_SCORE': {
+      const timeSpent = state.practiceStartTime
+        ? Math.round((Date.now() - state.practiceStartTime) / 1000)
+        : 0;
+
+      const practiceResult = {
+        roundNumber: state.currentRound,
+        scenario: state.scenarios[state.currentRound - 1],
+        prompt: state.practicePrompt,
+        score: action.payload,
+        timeSpent,
+      };
+
+      return {
+        ...state,
+        phase: 'practice-results',
+        practiceResults: [...state.practiceResults, practiceResult],
+      };
+    }
+
+    case 'NEXT_PRACTICE_ROUND':
+      if (state.currentRound >= state.settings.totalRounds) {
+        return { ...state, phase: 'final' };
+      }
+      return {
+        ...state,
+        phase: 'practice-playing',
+        currentRound: state.currentRound + 1,
+        practicePrompt: '',
+        practiceStartTime: Date.now(),
+      };
 
     default:
       return state;

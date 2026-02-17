@@ -1,13 +1,50 @@
 import { useState } from 'react';
 import { Button, Card, Modal } from '../components/ui';
 import { useGame } from '../context/GameContext';
+import { scenarios } from '../data/scenarios';
+import type { Category } from '../types';
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 export function MainMenu() {
   const { dispatch } = useGame();
   const [showRules, setShowRules] = useState(false);
+  const [showPracticeSetup, setShowPracticeSetup] = useState(false);
+  const [practiceCount, setPracticeCount] = useState(5);
+  const [practiceCategories, setPracticeCategories] = useState<Category[]>([
+    'troubleshooting', 'client-communication', 'documentation', 'research'
+  ]);
 
   const handleStartGame = () => {
     dispatch({ type: 'GO_TO_SETUP' });
+  };
+
+  const handleStartPractice = () => {
+    const filtered = scenarios.filter(s => practiceCategories.includes(s.category));
+    const shuffled = shuffleArray(filtered);
+    const selected = shuffled.slice(0, practiceCount);
+
+    dispatch({
+      type: 'START_PRACTICE',
+      payload: { scenarios: selected, categories: practiceCategories }
+    });
+  };
+
+  const togglePracticeCategory = (cat: Category) => {
+    if (practiceCategories.includes(cat)) {
+      if (practiceCategories.length > 1) {
+        setPracticeCategories(practiceCategories.filter(c => c !== cat));
+      }
+    } else {
+      setPracticeCategories([...practiceCategories, cat]);
+    }
   };
 
   return (
@@ -40,14 +77,89 @@ export function MainMenu() {
         </Card>
 
         {/* Main Actions */}
-        <div className="flex flex-col gap-4 mb-8">
-          <Button size="lg" onClick={handleStartGame} className="w-full">
-            New Game
-          </Button>
-          <Button size="lg" variant="secondary" onClick={() => setShowRules(true)} className="w-full">
-            Scoring Rubric
-          </Button>
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <Card className="p-6 text-center hover:border-blue-500/50 transition-colors cursor-pointer" onClick={handleStartGame}>
+            <div className="text-4xl mb-3">🏎️</div>
+            <h3 className="text-xl font-bold text-white mb-2">Team Battle</h3>
+            <p className="text-slate-400 text-sm mb-4">Two teams compete head-to-head with peer judging</p>
+            <Button size="lg" className="w-full">Start Game</Button>
+          </Card>
+
+          <Card className="p-6 text-center hover:border-emerald-500/50 transition-colors cursor-pointer" onClick={() => setShowPracticeSetup(true)}>
+            <div className="text-4xl mb-3">🎯</div>
+            <h3 className="text-xl font-bold text-white mb-2">Solo Practice</h3>
+            <p className="text-slate-400 text-sm mb-4">Train on your own, self-score, and learn from examples</p>
+            <Button size="lg" variant="secondary" className="w-full bg-emerald-600 hover:bg-emerald-700 border-emerald-600">Practice</Button>
+          </Card>
         </div>
+
+        {/* Scoring Rubric Link */}
+        <Button variant="secondary" onClick={() => setShowRules(true)} className="mb-8">
+          View Scoring Rubric
+        </Button>
+
+        {/* Practice Setup Modal */}
+        <Modal isOpen={showPracticeSetup} onClose={() => setShowPracticeSetup(false)} title="Practice Mode Setup">
+          <div className="space-y-6 text-left">
+            {/* Number of Scenarios */}
+            <div>
+              <label className="text-sm font-medium text-slate-300 mb-2 block">
+                Number of Scenarios
+              </label>
+              <div className="flex gap-2">
+                {[3, 5, 10].map(num => (
+                  <button
+                    key={num}
+                    onClick={() => setPracticeCount(num)}
+                    className={`flex-1 py-2 px-4 rounded-lg border transition-colors ${
+                      practiceCount === num
+                        ? 'bg-emerald-600 border-emerald-500 text-white'
+                        : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div>
+              <label className="text-sm font-medium text-slate-300 mb-2 block">
+                Categories (select at least one)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'troubleshooting' as Category, label: 'Troubleshooting', color: 'red' },
+                  { id: 'client-communication' as Category, label: 'Client Comms', color: 'blue' },
+                  { id: 'documentation' as Category, label: 'Documentation', color: 'green' },
+                  { id: 'research' as Category, label: 'Research', color: 'purple' },
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => togglePracticeCategory(cat.id)}
+                    className={`py-2 px-3 rounded-lg border text-sm transition-colors ${
+                      practiceCategories.includes(cat.id)
+                        ? `bg-${cat.color}-500/20 border-${cat.color}-500/50 text-${cat.color}-400`
+                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-500'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Start Button */}
+            <Button
+              size="lg"
+              onClick={handleStartPractice}
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+            >
+              Start Practice ({practiceCount} scenarios)
+            </Button>
+          </div>
+        </Modal>
 
         {/* Rules Modal */}
         <Modal isOpen={showRules} onClose={() => setShowRules(false)} title="Scoring Rubric">

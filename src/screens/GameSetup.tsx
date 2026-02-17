@@ -32,6 +32,7 @@ function shuffleArray<T>(array: T[]): T[] {
 export function GameSetup() {
   const { dispatch } = useGame();
   const [settings, setSettings] = useState<GameSettings>({
+    mode: 'versus',
     team1Name: '',
     team2Name: '',
     totalRounds: 7,

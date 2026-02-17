@@ -14,8 +14,205 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+import type { GameState, GameAction } from '../types';
+
+// Practice Mode Final Results Component
+function PracticeFinalResults({ state, dispatch }: { state: GameState; dispatch: React.Dispatch<GameAction> }) {
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const totalScore = state.practiceResults.reduce((sum, r) => sum + r.score.total, 0);
+  const averageScore = state.practiceResults.length > 0
+    ? Math.round(totalScore / state.practiceResults.length)
+    : 0;
+  const bestScore = Math.max(...state.practiceResults.map(r => r.score.total), 0);
+  const totalTime = state.practiceResults.reduce((sum, r) => sum + r.timeSpent, 0);
+
+  // Calculate category averages
+  const categoryTotals = state.practiceResults.reduce((acc, r) => ({
+    context: acc.context + r.score.context,
+    taskClarity: acc.taskClarity + r.score.taskClarity,
+    constraintsFormat: acc.constraintsFormat + r.score.constraintsFormat,
+    aupAwareness: acc.aupAwareness + r.score.aupAwareness,
+    practicalValue: acc.practicalValue + r.score.practicalValue,
+  }), { context: 0, taskClarity: 0, constraintsFormat: 0, aupAwareness: 0, practicalValue: 0 });
+
+  const count = state.practiceResults.length || 1;
+  const categoryAverages = {
+    context: Math.round(categoryTotals.context / count),
+    taskClarity: Math.round(categoryTotals.taskClarity / count),
+    constraintsFormat: Math.round(categoryTotals.constraintsFormat / count),
+    aupAwareness: Math.round(categoryTotals.aupAwareness / count),
+    practicalValue: Math.round(categoryTotals.practicalValue / count),
+  };
+
+  // Find weakest category
+  const categoryLabels: Record<string, string> = {
+    context: 'Context',
+    taskClarity: 'Task Clarity',
+    constraintsFormat: 'Constraints & Format',
+    aupAwareness: 'AUP Awareness',
+    practicalValue: 'Practical Value',
+  };
+  const weakestKey = Object.entries(categoryAverages).reduce((a, b) => a[1] < b[1] ? a : b)[0];
+  const strongestKey = Object.entries(categoryAverages).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+
+  useEffect(() => {
+    if (averageScore >= 70) {
+      setShowConfetti(true);
+    }
+  }, [averageScore]);
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 90) return { label: 'Outstanding!', emoji: '🏆' };
+    if (score >= 80) return { label: 'Excellent!', emoji: '🌟' };
+    if (score >= 70) return { label: 'Great job!', emoji: '👏' };
+    if (score >= 60) return { label: 'Good work!', emoji: '👍' };
+    if (score >= 50) return { label: 'Keep practicing!', emoji: '💪' };
+    return { label: 'Room to grow', emoji: '📚' };
+  };
+
+  const scoreInfo = getScoreLabel(averageScore);
+
+  const handleNewPractice = () => {
+    dispatch({ type: 'RESET_GAME' });
+  };
+
+  return (
+    <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full overflow-auto">
+      <Confetti isActive={showConfetti} duration={5000} />
+
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-4">
+          <span className="text-emerald-400 font-semibold">Practice Complete</span>
+        </div>
+        <div className="text-6xl mb-4">{scoreInfo.emoji}</div>
+        <h1 className="text-4xl font-bold text-white mb-2">{scoreInfo.label}</h1>
+        <p className="text-slate-400">
+          You completed {state.practiceResults.length} scenario{state.practiceResults.length !== 1 ? 's' : ''} in {Math.floor(totalTime / 60)}m {totalTime % 60}s
+        </p>
+      </div>
+
+      {/* Score Overview */}
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <Card className="text-center">
+          <p className="text-slate-400 text-sm mb-1">Average Score</p>
+          <p className={`text-4xl font-bold ${averageScore >= 70 ? 'text-green-400' : averageScore >= 50 ? 'text-blue-400' : 'text-amber-400'}`}>
+            {averageScore}
+          </p>
+          <p className="text-slate-500 text-xs">/100</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-slate-400 text-sm mb-1">Best Score</p>
+          <p className="text-4xl font-bold text-emerald-400">{bestScore}</p>
+          <p className="text-slate-500 text-xs">/100</p>
+        </Card>
+        <Card className="text-center">
+          <p className="text-slate-400 text-sm mb-1">Total Points</p>
+          <p className="text-4xl font-bold text-white">{totalScore}</p>
+          <p className="text-slate-500 text-xs">across {state.practiceResults.length} scenarios</p>
+        </Card>
+      </div>
+
+      {/* Category Breakdown */}
+      <Card className="mb-8">
+        <h3 className="text-lg font-semibold text-white mb-4">Category Performance</h3>
+        <div className="space-y-3">
+          {[
+            { key: 'context', label: 'Context', icon: '📋' },
+            { key: 'taskClarity', label: 'Task Clarity', icon: '🎯' },
+            { key: 'constraintsFormat', label: 'Constraints & Format', icon: '📐' },
+            { key: 'aupAwareness', label: 'AUP Awareness', icon: '🛡️' },
+            { key: 'practicalValue', label: 'Practical Value', icon: '⚡' },
+          ].map(({ key, label, icon }) => {
+            const avg = categoryAverages[key as keyof typeof categoryAverages];
+            const isWeak = key === weakestKey;
+            const isStrong = key === strongestKey;
+            return (
+              <div key={key} className="flex items-center gap-4">
+                <span className="text-xl w-8">{icon}</span>
+                <div className="flex-1">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-slate-300 text-sm">{label}</span>
+                    <span className={`text-sm font-medium ${avg >= 15 ? 'text-green-400' : avg >= 10 ? 'text-blue-400' : 'text-amber-400'}`}>
+                      {avg}/20
+                      {isWeak && <span className="ml-2 text-amber-400 text-xs">← Focus here</span>}
+                      {isStrong && <span className="ml-2 text-green-400 text-xs">← Strength!</span>}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${avg >= 15 ? 'bg-green-500' : avg >= 10 ? 'bg-blue-500' : 'bg-amber-500'}`}
+                      style={{ width: `${(avg / 20) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Learning Insight */}
+      <Card className="mb-8 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/30">
+        <div className="flex items-start gap-4">
+          <span className="text-3xl">💡</span>
+          <div>
+            <h4 className="text-white font-semibold mb-1">Learning Insight</h4>
+            <p className="text-slate-300 text-sm">
+              Your strongest area is <span className="text-green-400 font-medium">{categoryLabels[strongestKey]}</span>.
+              To improve, focus on <span className="text-amber-400 font-medium">{categoryLabels[weakestKey]}</span> -
+              {weakestKey === 'context' && ' try including more environmental details like OS version, error codes, and user environment.'}
+              {weakestKey === 'taskClarity' && ' be more specific about what output you need - lists, steps, explanations, etc.'}
+              {weakestKey === 'constraintsFormat' && ' specify format, tone, length, and audience in your prompts.'}
+              {weakestKey === 'aupAwareness' && ' remember to sanitize client data using placeholders like [CLIENT] or [USER@DOMAIN].'}
+              {weakestKey === 'practicalValue' && ' think about whether the AI response would actually solve the real-world problem.'}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Round-by-Round */}
+      <Card className="mb-8">
+        <h3 className="text-lg font-semibold text-white mb-4">Scenario Breakdown</h3>
+        <div className="space-y-2">
+          {state.practiceResults.map((result, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-slate-500 text-sm">#{index + 1}</span>
+                <span className="text-slate-300">{result.scenario.title}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-slate-500 text-sm">{result.timeSpent}s</span>
+                <span className={`font-bold ${result.score.total >= 70 ? 'text-green-400' : result.score.total >= 50 ? 'text-blue-400' : 'text-amber-400'}`}>
+                  {result.score.total}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Actions */}
+      <div className="flex justify-center gap-4">
+        <Button size="lg" onClick={handleNewPractice}>
+          Practice Again
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function FinalResults() {
   const { state, dispatch } = useGame();
+
+  // Check if this is practice mode
+  const isPracticeMode = state.settings.mode === 'practice';
+
+  // Practice mode final results
+  if (isPracticeMode) {
+    return <PracticeFinalResults state={state} dispatch={dispatch} />;
+  }
 
   const { winner, mvpPrompt, team1Weakness, team2Weakness } = useMemo(() => {
     // Determine winner
