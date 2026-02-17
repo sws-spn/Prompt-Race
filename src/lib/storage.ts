@@ -328,7 +328,7 @@ export function updatePlayerStats(updates: Partial<PlayerStats>): PlayerStats {
 
 // Utility: Check and award achievements based on game results
 export function checkAchievements(
-  gameResult: GameHistoryEntry,
+  _gameResult: GameHistoryEntry,
   promptTime?: number
 ): Achievement[] {
   const newlyUnlocked: Achievement[] = [];
