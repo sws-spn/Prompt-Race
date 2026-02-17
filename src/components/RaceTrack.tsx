@@ -67,9 +67,27 @@ export function RaceTrack({
   const [animatedTeam1, setAnimatedTeam1] = useState(0);
   const [animatedTeam2, setAnimatedTeam2] = useState(0);
 
-  const maxScore = totalRounds * 100;
-  const team1Percent = Math.min((team1Position / maxScore) * 100, 100);
-  const team2Percent = Math.min((team2Position / maxScore) * 100, 100);
+  // Calculate percentages
+  let team1Percent: number;
+  let team2Percent: number;
+
+  if (showFinishAnimation) {
+    // On final results: winner crosses finish line (100%), loser scaled proportionally
+    const maxPosition = Math.max(team1Position, team2Position);
+    if (maxPosition > 0) {
+      // Winner gets 100%, other team scaled relative to winner
+      team1Percent = (team1Position / maxPosition) * 100;
+      team2Percent = (team2Position / maxPosition) * 100;
+    } else {
+      team1Percent = 0;
+      team2Percent = 0;
+    }
+  } else {
+    // During game: use theoretical max score for progress
+    const maxScore = totalRounds * 100;
+    team1Percent = Math.min((team1Position / maxScore) * 100, 100);
+    team2Percent = Math.min((team2Position / maxScore) * 100, 100);
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
