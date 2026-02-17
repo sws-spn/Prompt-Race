@@ -46,6 +46,20 @@ export function ResultsScreen() {
         <h1 className="text-3xl font-bold text-white mt-2">
           {isTie ? "It's a Tie!" : team1Won ? `${state.settings.team1Name} Takes the Lead!` : `${state.settings.team2Name} Takes the Lead!`}
         </h1>
+
+        {/* Streak Display */}
+        {(state.team1Streak >= 2 || state.team2Streak >= 2) && (
+          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-full">
+            <span className="text-2xl">{state.team1Streak >= 2 || state.team2Streak >= 2 ? '🔥' : ''}</span>
+            <span className="text-amber-400 font-bold">
+              {state.team1Streak >= 2
+                ? `${state.settings.team1Name} is on a ${state.team1Streak}-win streak!`
+                : `${state.settings.team2Name} is on a ${state.team2Streak}-win streak!`}
+            </span>
+            {(state.team1Streak >= 3 || state.team2Streak >= 3) && <span className="text-lg">⭐</span>}
+            {(state.team1Streak >= 5 || state.team2Streak >= 5) && <span className="text-lg">🌟</span>}
+          </div>
+        )}
       </div>
 
       {/* Race Track */}

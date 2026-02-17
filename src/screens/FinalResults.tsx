@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Button, Card } from '../components/ui';
 import { RaceTrack } from '../components/RaceTrack';
 import { Confetti } from '../components/Confetti';
 import { useGame } from '../context/GameContext';
 import { scenarios } from '../data/scenarios';
+import { addGameToHistory, updatePlayerStats, getPlayerStats, checkAchievements, checkScoreAchievements, type CategoryScores, type Achievement } from '../lib/storage';
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -302,6 +303,138 @@ export function FinalResults() {
 
   const [copied, setCopied] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const hasSavedGame = useRef(false);
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+
+  // Save game to history on mount
+  useEffect(() => {
+    if (hasSavedGame.current) return;
+    hasSavedGame.current = true;
+
+    // Calculate category totals for history
+    const team1CatScores: CategoryScores = { context: 0, taskClarity: 0, constraintsFormat: 0, aupAwareness: 0, practicalValue: 0 };
+    const team2CatScores: CategoryScores = { context: 0, taskClarity: 0, constraintsFormat: 0, aupAwareness: 0, practicalValue: 0 };
+
+    state.roundResults.forEach((result) => {
+      team1CatScores.context += result.team1Score.context;
+      team1CatScores.taskClarity += result.team1Score.taskClarity;
+      team1CatScores.constraintsFormat += result.team1Score.constraintsFormat;
+      team1CatScores.aupAwareness += result.team1Score.aupAwareness;
+      team1CatScores.practicalValue += result.team1Score.practicalValue;
+
+      team2CatScores.context += result.team2Score.context;
+      team2CatScores.taskClarity += result.team2Score.taskClarity;
+      team2CatScores.constraintsFormat += result.team2Score.constraintsFormat;
+      team2CatScores.aupAwareness += result.team2Score.aupAwareness;
+      team2CatScores.practicalValue += result.team2Score.practicalValue;
+    });
+
+    // Save to history
+    addGameToHistory({
+      mode: 'versus',
+      team1Name: state.settings.team1Name,
+      team2Name: state.settings.team2Name,
+      team1Score: state.team1Position,
+      team2Score: state.team2Position,
+      rounds: state.settings.totalRounds,
+      winner,
+      categoryScores: { team1: team1CatScores, team2: team2CatScores },
+    });
+
+    // Update player stats
+    const currentStats = getPlayerStats();
+    const roundCount = state.roundResults.length || 1;
+    const avgTeam1 = state.team1Position / roundCount;
+    const avgTeam2 = state.team2Position / roundCount;
+    const thisGameAvg = Math.max(avgTeam1, avgTeam2);
+    const thisGameBest = Math.max(
+      ...state.roundResults.flatMap(r => [r.team1Score.total, r.team2Score.total])
+    );
+
+    const newTotalGames = currentStats.totalGames + 1;
+    const newTotalPrompts = currentStats.totalPrompts + state.roundResults.length * 2;
+    const newAvgScore = currentStats.totalGames > 0
+      ? ((currentStats.averageScore * currentStats.totalGames) + thisGameAvg) / newTotalGames
+      : thisGameAvg;
+
+    // Calculate difficulty stats update
+    const difficultyMix = state.settings.difficultyMix;
+    let difficultyUpdate: Record<string, number> = {};
+
+    if (difficultyMix === 'easy') {
+      difficultyUpdate = {
+        easyGamesPlayed: currentStats.easyGamesPlayed + 1,
+        easyAverageScore: currentStats.easyGamesPlayed > 0
+          ? Math.round(((currentStats.easyAverageScore * currentStats.easyGamesPlayed) + thisGameAvg) / (currentStats.easyGamesPlayed + 1))
+          : Math.round(thisGameAvg),
+      };
+    } else if (difficultyMix === 'hard') {
+      difficultyUpdate = {
+        hardGamesPlayed: currentStats.hardGamesPlayed + 1,
+        hardAverageScore: currentStats.hardGamesPlayed > 0
+          ? Math.round(((currentStats.hardAverageScore * currentStats.hardGamesPlayed) + thisGameAvg) / (currentStats.hardGamesPlayed + 1))
+          : Math.round(thisGameAvg),
+      };
+    } else {
+      difficultyUpdate = {
+        mediumGamesPlayed: currentStats.mediumGamesPlayed + 1,
+        mediumAverageScore: currentStats.mediumGamesPlayed > 0
+          ? Math.round(((currentStats.mediumAverageScore * currentStats.mediumGamesPlayed) + thisGameAvg) / (currentStats.mediumGamesPlayed + 1))
+          : Math.round(thisGameAvg),
+      };
+    }
+
+    updatePlayerStats({
+      totalGames: newTotalGames,
+      totalWins: currentStats.totalWins + (winner !== 'tie' ? 1 : 0),
+      totalPrompts: newTotalPrompts,
+      averageScore: Math.round(newAvgScore),
+      bestScore: Math.max(currentStats.bestScore, thisGameBest),
+      categoryAverages: {
+        context: Math.round(((currentStats.categoryAverages.context * currentStats.totalGames) + (team1CatScores.context + team2CatScores.context) / 2 / roundCount) / newTotalGames),
+        taskClarity: Math.round(((currentStats.categoryAverages.taskClarity * currentStats.totalGames) + (team1CatScores.taskClarity + team2CatScores.taskClarity) / 2 / roundCount) / newTotalGames),
+        constraintsFormat: Math.round(((currentStats.categoryAverages.constraintsFormat * currentStats.totalGames) + (team1CatScores.constraintsFormat + team2CatScores.constraintsFormat) / 2 / roundCount) / newTotalGames),
+        aupAwareness: Math.round(((currentStats.categoryAverages.aupAwareness * currentStats.totalGames) + (team1CatScores.aupAwareness + team2CatScores.aupAwareness) / 2 / roundCount) / newTotalGames),
+        practicalValue: Math.round(((currentStats.categoryAverages.practicalValue * currentStats.totalGames) + (team1CatScores.practicalValue + team2CatScores.practicalValue) / 2 / roundCount) / newTotalGames),
+      },
+      currentStreak: winner !== 'tie' ? currentStats.currentStreak + 1 : 0,
+      bestStreak: Math.max(currentStats.bestStreak, winner !== 'tie' ? currentStats.currentStreak + 1 : currentStats.currentStreak),
+      ...difficultyUpdate,
+    });
+
+    // Check achievements
+    const unlocked: Achievement[] = [];
+
+    // Check game-based achievements
+    const gameHistoryEntry = {
+      id: '',
+      date: new Date().toISOString(),
+      mode: 'versus' as const,
+      team1Name: state.settings.team1Name,
+      team2Name: state.settings.team2Name,
+      team1Score: state.team1Position,
+      team2Score: state.team2Position,
+      rounds: state.settings.totalRounds,
+      winner,
+      categoryScores: { team1: team1CatScores, team2: team2CatScores },
+    };
+    unlocked.push(...checkAchievements(gameHistoryEntry));
+
+    // Check score-based achievements for each round
+    state.roundResults.forEach(result => {
+      unlocked.push(...checkScoreAchievements(result.team1Score.total, result.team1Score));
+      unlocked.push(...checkScoreAchievements(result.team2Score.total, result.team2Score));
+    });
+
+    // Remove duplicates
+    const uniqueUnlocked = unlocked.filter((ach, index, self) =>
+      index === self.findIndex(a => a.id === ach.id)
+    );
+
+    if (uniqueUnlocked.length > 0) {
+      setNewAchievements(uniqueUnlocked);
+    }
+  }, [state, winner]);
 
   // Trigger confetti on mount if there's a winner
   useEffect(() => {
@@ -419,6 +552,29 @@ export function FinalResults() {
     <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full overflow-auto">
       {/* Confetti Celebration */}
       <Confetti isActive={showConfetti} duration={5000} />
+
+      {/* New Achievements Banner */}
+      {newAchievements.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-2xl">🎉</span>
+            <h3 className="text-lg font-bold text-amber-400">
+              Achievement{newAchievements.length > 1 ? 's' : ''} Unlocked!
+            </h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {newAchievements.map(ach => (
+              <div key={ach.id} className="flex items-center gap-2 bg-slate-800/50 px-3 py-2 rounded-lg">
+                <span className="text-2xl">{ach.icon}</span>
+                <div>
+                  <p className="text-white font-medium text-sm">{ach.name}</p>
+                  <p className="text-slate-400 text-xs">{ach.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Winner Announcement */}
       <div className="text-center mb-8">

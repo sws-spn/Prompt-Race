@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button, Card, Input } from '../components/ui';
 import { useGame } from '../context/GameContext';
 import { scenarios } from '../data/scenarios';
+import { getCustomScenarios, getPlayerStats, getRecommendedDifficulty } from '../lib/storage';
 import type { Category, GameSettings } from '../types';
 
 const CATEGORIES: { id: Category; label: string }[] = [
@@ -31,6 +32,10 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function GameSetup() {
   const { dispatch } = useGame();
+  const customScenarios = useMemo(() => getCustomScenarios(), []);
+  const allScenarios = useMemo(() => [...scenarios, ...customScenarios], [customScenarios]);
+  const playerStats = useMemo(() => getPlayerStats(), []);
+  const recommendedDifficulty = useMemo(() => getRecommendedDifficulty(), []);
   const [settings, setSettings] = useState<GameSettings>({
     mode: 'versus',
     team1Name: '',
@@ -53,8 +58,8 @@ export function GameSetup() {
   };
 
   const handleStartGame = () => {
-    // Filter and shuffle scenarios
-    let filtered = scenarios.filter((s) => settings.categories.includes(s.category));
+    // Filter and shuffle scenarios (includes custom scenarios)
+    let filtered = allScenarios.filter((s) => settings.categories.includes(s.category));
 
     if (settings.difficultyMix === 'easy') {
       filtered = filtered.filter((s) => s.difficulty === 1);
@@ -167,8 +172,15 @@ export function GameSetup() {
 
           {/* Difficulty */}
           <Card>
-            <h3 className="text-lg font-semibold text-white mb-4">Difficulty</h3>
-            <div className="flex gap-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Difficulty</h3>
+              {playerStats.totalGames >= 3 && (
+                <span className="text-xs text-slate-400">
+                  Avg Score: {playerStats.averageScore}/100
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 mb-4">
               {[
                 { value: 'all', label: 'All Levels' },
                 { value: 'easy', label: 'Easy Only' },
@@ -177,16 +189,54 @@ export function GameSetup() {
                 <button
                   key={opt.value}
                   onClick={() => setSettings({ ...settings, difficultyMix: opt.value as GameSettings['difficultyMix'] })}
-                  className={`px-4 py-2 rounded-lg transition-all ${
+                  className={`px-4 py-2 rounded-lg transition-all relative ${
                     settings.difficultyMix === opt.value
                       ? 'bg-blue-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                   }`}
                 >
                   {opt.label}
+                  {opt.value === recommendedDifficulty && playerStats.totalGames >= 3 && (
+                    <span className="absolute -top-1 -right-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded-full">
+                      ★
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
+
+            {/* Progression Info */}
+            {playerStats.totalGames > 0 && (
+              <div className="pt-3 border-t border-slate-700">
+                <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                  <span>📈</span>
+                  <span>Your Progress</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className={`p-2 rounded ${playerStats.easyGamesPlayed > 0 ? 'bg-green-500/20 border border-green-500/30' : 'bg-slate-800'}`}>
+                    <div className="text-green-400 font-medium">Easy</div>
+                    <div className="text-slate-400">{playerStats.easyGamesPlayed} games</div>
+                    {playerStats.easyGamesPlayed > 0 && (
+                      <div className="text-slate-500">avg {playerStats.easyAverageScore}</div>
+                    )}
+                  </div>
+                  <div className={`p-2 rounded ${playerStats.mediumGamesPlayed > 0 ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-slate-800'}`}>
+                    <div className="text-yellow-400 font-medium">Mixed</div>
+                    <div className="text-slate-400">{playerStats.mediumGamesPlayed} games</div>
+                    {playerStats.mediumGamesPlayed > 0 && (
+                      <div className="text-slate-500">avg {playerStats.mediumAverageScore}</div>
+                    )}
+                  </div>
+                  <div className={`p-2 rounded ${playerStats.hardGamesPlayed > 0 ? 'bg-red-500/20 border border-red-500/30' : 'bg-slate-800'}`}>
+                    <div className="text-red-400 font-medium">Hard</div>
+                    <div className="text-slate-400">{playerStats.hardGamesPlayed} games</div>
+                    {playerStats.hardGamesPlayed > 0 && (
+                      <div className="text-slate-500">avg {playerStats.hardAverageScore}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Actions */}

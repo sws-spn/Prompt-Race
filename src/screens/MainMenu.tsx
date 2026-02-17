@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button, Card, Modal } from '../components/ui';
 import { useGame } from '../context/GameContext';
 import { scenarios } from '../data/scenarios';
+import { getCustomScenarios } from '../lib/storage';
 import type { Category } from '../types';
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -15,6 +16,8 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function MainMenu() {
   const { dispatch } = useGame();
+  const customScenarios = useMemo(() => getCustomScenarios(), []);
+  const allScenarios = useMemo(() => [...scenarios, ...customScenarios], [customScenarios]);
   const [showRules, setShowRules] = useState(false);
   const [showPracticeSetup, setShowPracticeSetup] = useState(false);
   const [practiceCount, setPracticeCount] = useState(5);
@@ -27,7 +30,7 @@ export function MainMenu() {
   };
 
   const handleStartPractice = () => {
-    const filtered = scenarios.filter(s => practiceCategories.includes(s.category));
+    const filtered = allScenarios.filter(s => practiceCategories.includes(s.category));
     const shuffled = shuffleArray(filtered);
     const selected = shuffled.slice(0, practiceCount);
 
@@ -93,10 +96,21 @@ export function MainMenu() {
           </Card>
         </div>
 
-        {/* Scoring Rubric Link */}
-        <Button variant="secondary" onClick={() => setShowRules(true)} className="mb-8">
-          View Scoring Rubric
-        </Button>
+        {/* Secondary Actions */}
+        <div className="flex flex-wrap gap-4 justify-center mb-8">
+          <Button variant="secondary" onClick={() => setShowRules(true)}>
+            View Scoring Rubric
+          </Button>
+          <Button variant="ghost" onClick={() => dispatch({ type: 'GO_TO_HISTORY' })}>
+            📊 History & Stats
+          </Button>
+          <Button variant="ghost" onClick={() => dispatch({ type: 'GO_TO_ACHIEVEMENTS' })}>
+            🏆 Achievements
+          </Button>
+          <Button variant="ghost" onClick={() => dispatch({ type: 'GO_TO_CUSTOM_SCENARIOS' })}>
+            Custom Scenarios
+          </Button>
+        </div>
 
         {/* Practice Setup Modal */}
         <Modal isOpen={showPracticeSetup} onClose={() => setShowPracticeSetup(false)} title="Practice Mode Setup">

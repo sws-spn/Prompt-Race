@@ -7,6 +7,9 @@ import {
   PeerJudgingScreen,
   ResultsScreen,
   FinalResults,
+  CustomScenariosScreen,
+  HistoryScreen,
+  AchievementsScreen,
 } from './screens';
 import { PracticePlayingScreen } from './screens/PracticePlayingScreen';
 import { PracticeScoringScreen } from './screens/PracticeScoringScreen';
@@ -28,6 +31,12 @@ function GameRouter() {
       return <ResultsScreen />;
     case 'final':
       return <FinalResults />;
+    case 'custom-scenarios':
+      return <CustomScenariosScreen />;
+    case 'history':
+      return <HistoryScreen />;
+    case 'achievements':
+      return <AchievementsScreen />;
     // Practice Mode phases
     case 'practice-playing':
       return <PracticePlayingScreen />;

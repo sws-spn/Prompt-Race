@@ -65,6 +65,13 @@ export interface PlayerStats {
   currentStreak: number;
   bestStreak: number;
   fastestPrompt: number | null; // seconds
+  // Difficulty progression
+  easyGamesPlayed: number;
+  mediumGamesPlayed: number;
+  hardGamesPlayed: number;
+  easyAverageScore: number;
+  mediumAverageScore: number;
+  hardAverageScore: number;
 }
 
 // Default achievements
@@ -316,7 +323,34 @@ export function getPlayerStats(): PlayerStats {
     currentStreak: 0,
     bestStreak: 0,
     fastestPrompt: null,
+    // Difficulty progression
+    easyGamesPlayed: 0,
+    mediumGamesPlayed: 0,
+    hardGamesPlayed: 0,
+    easyAverageScore: 0,
+    mediumAverageScore: 0,
+    hardAverageScore: 0,
   });
+}
+
+// Helper to get recommended difficulty based on player stats
+export function getRecommendedDifficulty(): 'all' | 'easy' | 'hard' {
+  const stats = getPlayerStats();
+
+  // New players should start with all difficulties
+  if (stats.totalGames < 3) return 'all';
+
+  // If average score is high enough, recommend harder
+  if (stats.averageScore >= 75 && stats.easyGamesPlayed >= 2) {
+    return 'hard';
+  }
+
+  // If struggling, recommend easier
+  if (stats.averageScore < 50 && stats.totalGames >= 3) {
+    return 'easy';
+  }
+
+  return 'all';
 }
 
 export function updatePlayerStats(updates: Partial<PlayerStats>): PlayerStats {

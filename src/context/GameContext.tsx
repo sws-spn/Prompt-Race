@@ -24,6 +24,9 @@ const initialState: GameState = {
   judgingTeam: 1,
   pendingTeam2Score: null,
   error: null,
+  // Streak tracking
+  team1Streak: 0,
+  team2Streak: 0,
   // Practice mode state
   practicePrompt: '',
   practiceResults: [],
@@ -34,6 +37,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'GO_TO_SETUP':
       return { ...state, phase: 'setup' };
+
+    case 'GO_TO_CUSTOM_SCENARIOS':
+      return { ...state, phase: 'custom-scenarios' };
+
+    case 'GO_TO_HISTORY':
+      return { ...state, phase: 'history' };
+
+    case 'GO_TO_ACHIEVEMENTS':
+      return { ...state, phase: 'achievements' };
 
     case 'START_GAME':
       return {
@@ -48,6 +60,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         roundResults: [],
         team1Position: 0,
         team2Position: 0,
+        team1Streak: 0,
+        team2Streak: 0,
         judgingTeam: 1,
         pendingTeam2Score: null,
         error: null,
@@ -97,12 +111,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           roundCommentary: '', // No AI commentary in peer mode
         };
 
+        // Update streaks
+        let newTeam1Streak = state.team1Streak;
+        let newTeam2Streak = state.team2Streak;
+
+        if (team1Score.total > team2Score.total) {
+          newTeam1Streak += 1;
+          newTeam2Streak = 0;
+        } else if (team2Score.total > team1Score.total) {
+          newTeam2Streak += 1;
+          newTeam1Streak = 0;
+        } else {
+          // Tie - maintain both streaks
+        }
+
         return {
           ...state,
           phase: 'results',
           roundResults: [...state.roundResults, newResult],
           team1Position: state.team1Position + team1Score.total,
           team2Position: state.team2Position + team2Score.total,
+          team1Streak: newTeam1Streak,
+          team2Streak: newTeam2Streak,
           pendingTeam2Score: null,
         };
       }

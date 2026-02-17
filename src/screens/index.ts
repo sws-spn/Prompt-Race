@@ -4,3 +4,6 @@ export { RoundScreen } from './RoundScreen';
 export { PeerJudgingScreen } from './PeerJudgingScreen';
 export { ResultsScreen } from './ResultsScreen';
 export { FinalResults } from './FinalResults';
+export { CustomScenariosScreen } from './CustomScenariosScreen';
+export { HistoryScreen } from './HistoryScreen';
+export { AchievementsScreen } from './AchievementsScreen';

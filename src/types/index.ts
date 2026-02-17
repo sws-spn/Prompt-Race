@@ -1,7 +1,7 @@
 export type Category = 'troubleshooting' | 'client-communication' | 'documentation' | 'research';
 export type Difficulty = 1 | 2 | 3;
 export type GameMode = 'versus' | 'practice';
-export type GamePhase = 'menu' | 'setup' | 'playing' | 'judging' | 'results' | 'final' | 'practice-playing' | 'practice-scoring' | 'practice-results';
+export type GamePhase = 'menu' | 'setup' | 'playing' | 'judging' | 'results' | 'final' | 'practice-playing' | 'practice-scoring' | 'practice-results' | 'custom-scenarios' | 'history' | 'achievements';
 
 export interface ExamplePrompt {
   prompt: string;
@@ -78,6 +78,9 @@ export interface GameState {
   judgingTeam: 1 | 2;
   pendingTeam2Score: TeamScore | null; // Score given BY Team 1 FOR Team 2's prompt
   error: string | null;
+  // Streak tracking
+  team1Streak: number;
+  team2Streak: number;
   // Practice mode state
   practicePrompt: string;
   practiceResults: PracticeRoundResult[];
@@ -93,6 +96,9 @@ export type GameAction =
   | { type: 'RESET_GAME' }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'GO_TO_SETUP' }
+  | { type: 'GO_TO_CUSTOM_SCENARIOS' }
+  | { type: 'GO_TO_HISTORY' }
+  | { type: 'GO_TO_ACHIEVEMENTS' }
   | { type: 'START_PRACTICE'; payload: { scenarios: Scenario[]; categories: Category[] } }
   | { type: 'SUBMIT_PRACTICE_PROMPT'; payload: string }
   | { type: 'SUBMIT_PRACTICE_SCORE'; payload: TeamScore }
