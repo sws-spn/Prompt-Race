@@ -1,10 +1,12 @@
-import { Button } from '../components/ui';
+import { useState } from 'react';
+import { Button, Card } from '../components/ui';
 import { RaceTrack } from '../components/RaceTrack';
 import { ScoreBreakdown } from '../components/ScoreBreakdown';
 import { useGame } from '../context/GameContext';
 
 export function ResultsScreen() {
   const { state, dispatch } = useGame();
+  const [showGoldStandard, setShowGoldStandard] = useState(false);
 
   const latestResult = state.roundResults[state.roundResults.length - 1];
   const isLastRound = state.currentRound >= state.settings.totalRounds;
@@ -95,6 +97,86 @@ export function ResultsScreen() {
           </div>
         </div>
       </details>
+
+      {/* Gold Standard Example */}
+      <Card className="mt-6 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/30">
+        <button
+          onClick={() => setShowGoldStandard(!showGoldStandard)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🏆</span>
+            <div>
+              <h3 className="text-lg font-bold text-amber-400">Gold Standard Example</h3>
+              <p className="text-sm text-slate-400">See what a high-scoring prompt looks like for this scenario</p>
+            </div>
+          </div>
+          <span className={`text-slate-400 transition-transform ${showGoldStandard ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+        </button>
+
+        {showGoldStandard && (
+          <div className="mt-4 pt-4 border-t border-amber-500/20">
+            {/* Example Prompt */}
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-amber-300 mb-2">Example Prompt</h4>
+              <div className="p-4 bg-slate-900/80 rounded-lg">
+                <p className="text-white text-sm whitespace-pre-wrap font-mono">
+                  {latestResult.scenario.examplePrompt.prompt}
+                </p>
+              </div>
+            </div>
+
+            {/* Breakdown by Criteria */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-amber-300">Why This Prompt Scores Well</h4>
+
+              <div className="grid gap-3">
+                <div className="p-3 bg-slate-900/50 rounded-lg border-l-4 border-blue-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-blue-400 font-semibold text-sm">Context</span>
+                    <span className="text-slate-500 text-xs">(Environmental/situational detail)</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{latestResult.scenario.examplePrompt.breakdown.context}</p>
+                </div>
+
+                <div className="p-3 bg-slate-900/50 rounded-lg border-l-4 border-green-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-green-400 font-semibold text-sm">Task Clarity</span>
+                    <span className="text-slate-500 text-xs">(Specific and unambiguous ask)</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{latestResult.scenario.examplePrompt.breakdown.taskClarity}</p>
+                </div>
+
+                <div className="p-3 bg-slate-900/50 rounded-lg border-l-4 border-purple-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-purple-400 font-semibold text-sm">Constraints & Format</span>
+                    <span className="text-slate-500 text-xs">(Output shaping)</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{latestResult.scenario.examplePrompt.breakdown.constraintsFormat}</p>
+                </div>
+
+                <div className="p-3 bg-slate-900/50 rounded-lg border-l-4 border-amber-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-amber-400 font-semibold text-sm">AUP Awareness</span>
+                    <span className="text-slate-500 text-xs">(Data sanitization)</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{latestResult.scenario.examplePrompt.breakdown.aupAwareness}</p>
+                </div>
+
+                <div className="p-3 bg-slate-900/50 rounded-lg border-l-4 border-rose-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-rose-400 font-semibold text-sm">Practical Value</span>
+                    <span className="text-slate-500 text-xs">(Would the response be useful?)</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{latestResult.scenario.examplePrompt.breakdown.practicalValue}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Actions */}
       <div className="mt-8 flex justify-center gap-4">

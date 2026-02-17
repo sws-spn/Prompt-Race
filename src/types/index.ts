@@ -2,6 +2,17 @@ export type Category = 'troubleshooting' | 'client-communication' | 'documentati
 export type Difficulty = 1 | 2 | 3;
 export type GamePhase = 'menu' | 'setup' | 'playing' | 'judging' | 'results' | 'final';
 
+export interface ExamplePrompt {
+  prompt: string;
+  breakdown: {
+    context: string;
+    taskClarity: string;
+    constraintsFormat: string;
+    aupAwareness: string;
+    practicalValue: string;
+  };
+}
+
 export interface Scenario {
   id: string;
   category: Category;
@@ -10,6 +21,7 @@ export interface Scenario {
   roleHint?: string;
   difficulty: Difficulty;
   idealElements: string[];
+  examplePrompt: ExamplePrompt;
 }
 
 export interface TeamScore {
