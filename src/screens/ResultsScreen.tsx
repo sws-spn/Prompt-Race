@@ -118,6 +118,13 @@ export function ResultsScreen() {
 
         {showGoldStandard && (
           <div className="mt-4 pt-4 border-t border-amber-500/20">
+            {/* Scenario Context */}
+            <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-400 mb-1">Scenario</h4>
+              <p className="text-white font-medium mb-2">{latestResult.scenario.title}</p>
+              <p className="text-slate-300 text-sm">{latestResult.scenario.situation}</p>
+            </div>
+
             {/* Example Prompt */}
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-amber-300 mb-2">Example Prompt</h4>
