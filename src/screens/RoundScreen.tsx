@@ -85,6 +85,26 @@ export function RoundScreen() {
         )}
       </Card>
 
+      {/* Hints (Collapsible) */}
+      <details className="mb-4 group">
+        <summary className="cursor-pointer flex items-center gap-2 text-amber-400 hover:text-amber-300 transition-colors">
+          <span className="text-lg">💡</span>
+          <span className="text-sm font-medium">Need hints? Click to reveal tips for this scenario</span>
+          <span className="text-xs text-slate-500 group-open:hidden">(won't affect your score)</span>
+        </summary>
+        <div className="mt-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+          <p className="text-amber-300 text-sm font-medium mb-2">Consider including:</p>
+          <ul className="space-y-1">
+            {scenario.idealElements.map((element, index) => (
+              <li key={index} className="text-slate-300 text-sm flex items-start gap-2">
+                <span className="text-amber-400">•</span>
+                <span>{element}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </details>
+
       {/* Prompt Instructions */}
       <div className="mb-4">
         <p className="text-slate-400 text-sm">

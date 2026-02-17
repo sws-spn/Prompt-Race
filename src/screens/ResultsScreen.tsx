@@ -1,15 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Card } from '../components/ui';
 import { RaceTrack } from '../components/RaceTrack';
 import { ScoreBreakdown } from '../components/ScoreBreakdown';
+import { Confetti } from '../components/Confetti';
 import { useGame } from '../context/GameContext';
 
 export function ResultsScreen() {
   const { state, dispatch } = useGame();
   const [showGoldStandard, setShowGoldStandard] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const latestResult = state.roundResults[state.roundResults.length - 1];
   const isLastRound = state.currentRound >= state.settings.totalRounds;
+
+  // Trigger confetti when there's a clear winner
+  useEffect(() => {
+    if (latestResult && latestResult.team1Score.total !== latestResult.team2Score.total) {
+      setShowConfetti(true);
+    }
+  }, [latestResult]);
 
   const handleNextRound = () => {
     dispatch({ type: 'NEXT_ROUND' });
@@ -26,6 +35,9 @@ export function ResultsScreen() {
 
   return (
     <div className="flex-1 flex flex-col p-6 max-w-6xl mx-auto w-full overflow-auto">
+      {/* Confetti Celebration */}
+      <Confetti isActive={showConfetti} duration={3000} />
+
       {/* Header */}
       <div className="text-center mb-6">
         <span className="text-slate-400">
@@ -125,13 +137,42 @@ export function ResultsScreen() {
               <p className="text-slate-300 text-sm">{latestResult.scenario.situation}</p>
             </div>
 
-            {/* Example Prompt */}
+            {/* Side-by-Side Comparison */}
             <div className="mb-6">
-              <h4 className="text-sm font-semibold text-amber-300 mb-2">Example Prompt</h4>
-              <div className="p-4 bg-slate-900/80 rounded-lg">
-                <p className="text-white text-sm whitespace-pre-wrap font-mono">
-                  {latestResult.scenario.examplePrompt.prompt}
-                </p>
+              <h4 className="text-sm font-semibold text-amber-300 mb-3">Compare Your Prompts</h4>
+              <div className="grid md:grid-cols-3 gap-3">
+                {/* Team 1's Prompt */}
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-blue-400 text-sm font-medium">{state.settings.team1Name}</span>
+                    <span className="text-slate-500 text-xs">{latestResult.team1Score.total} pts</span>
+                  </div>
+                  <p className="text-slate-300 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    {latestResult.team1Prompt}
+                  </p>
+                </div>
+
+                {/* Team 2's Prompt */}
+                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-purple-400 text-sm font-medium">{state.settings.team2Name}</span>
+                    <span className="text-slate-500 text-xs">{latestResult.team2Score.total} pts</span>
+                  </div>
+                  <p className="text-slate-300 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    {latestResult.team2Prompt}
+                  </p>
+                </div>
+
+                {/* Gold Standard */}
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-amber-400 text-sm font-medium">Gold Standard</span>
+                    <span className="text-amber-500 text-xs">100 pts</span>
+                  </div>
+                  <p className="text-slate-300 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
+                    {latestResult.scenario.examplePrompt.prompt}
+                  </p>
+                </div>
               </div>
             </div>
 

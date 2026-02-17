@@ -1,7 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button, Card } from '../components/ui';
 import { RaceTrack } from '../components/RaceTrack';
+import { Confetti } from '../components/Confetti';
 import { useGame } from '../context/GameContext';
+import { scenarios } from '../data/scenarios';
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 export function FinalResults() {
   const { state, dispatch } = useGame();
@@ -93,9 +104,37 @@ export function FinalResults() {
       : null;
 
   const [copied, setCopied] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Trigger confetti on mount if there's a winner
+  useEffect(() => {
+    if (winner !== 'tie') {
+      setShowConfetti(true);
+    }
+  }, [winner]);
 
   const handlePlayAgain = () => {
     dispatch({ type: 'GO_TO_SETUP' });
+  };
+
+  const handleQuickRematch = () => {
+    // Reshuffle scenarios with same settings
+    const settings = state.settings;
+    let filtered = scenarios.filter((s) => settings.categories.includes(s.category));
+
+    if (settings.difficultyMix === 'easy') {
+      filtered = filtered.filter((s) => s.difficulty === 1);
+    } else if (settings.difficultyMix === 'hard') {
+      filtered = filtered.filter((s) => s.difficulty >= 2);
+    }
+
+    const shuffled = shuffleArray(filtered);
+    const selected = shuffled.slice(0, settings.totalRounds);
+
+    dispatch({
+      type: 'START_GAME',
+      payload: { settings, scenarios: selected },
+    });
   };
 
   const handleNewGame = () => {
@@ -138,6 +177,40 @@ export function FinalResults() {
     return text;
   };
 
+  const generateShareCard = () => {
+    const winEmoji = winner === 'tie' ? '🤝' : '🏆';
+    const winText = winner === 'tie'
+      ? "It's a tie!"
+      : `${winnerName} wins!`;
+
+    let card = `┌─────────────────────────────────┐\n`;
+    card += `│      🏎️ PROMPT RACE RESULTS      │\n`;
+    card += `├─────────────────────────────────┤\n`;
+    card += `│                                 │\n`;
+    card += `│  ${winEmoji} ${winText.padEnd(27)} │\n`;
+    card += `│                                 │\n`;
+    card += `│  ${state.settings.team1Name.padEnd(15)} ${String(state.team1Position).padStart(4)} pts  │\n`;
+    card += `│  ${state.settings.team2Name.padEnd(15)} ${String(state.team2Position).padStart(4)} pts  │\n`;
+    card += `│                                 │\n`;
+    card += `│  ──────────────────────────     │\n`;
+    card += `│  Rounds: ${state.settings.totalRounds}                      │\n`;
+    card += `│  MVP: ${mvpPrompt.team} (${mvpPrompt.score} pts)      │\n`;
+    card += `│                                 │\n`;
+    card += `└─────────────────────────────────┘\n`;
+    card += `\n🎮 Play at: prompt-race.vercel.app`;
+
+    return card;
+  };
+
+  const [cardCopied, setCardCopied] = useState(false);
+
+  const handleCopyShareCard = async () => {
+    const card = generateShareCard();
+    await navigator.clipboard.writeText(card);
+    setCardCopied(true);
+    setTimeout(() => setCardCopied(false), 2000);
+  };
+
   const handleCopyAll = async () => {
     const text = generateExportText();
     await navigator.clipboard.writeText(text);
@@ -147,6 +220,9 @@ export function FinalResults() {
 
   return (
     <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full overflow-auto">
+      {/* Confetti Celebration */}
+      <Confetti isActive={showConfetti} duration={5000} />
+
       {/* Winner Announcement */}
       <div className="text-center mb-8">
         {winner === 'tie' ? (
@@ -162,6 +238,24 @@ export function FinalResults() {
             <p className="text-slate-400">Congratulations on your victory</p>
           </>
         )}
+
+        {/* Share Button */}
+        <button
+          onClick={handleCopyShareCard}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+        >
+          {cardCopied ? (
+            <>
+              <span>✓</span>
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <span>📋</span>
+              <span>Share Results</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Final Race Track */}
@@ -306,13 +400,25 @@ export function FinalResults() {
       </Card>
 
       {/* Actions */}
-      <div className="mt-8 flex justify-center gap-4">
-        <Button variant="secondary" size="lg" onClick={handlePlayAgain}>
-          Play Again
+      <div className="mt-8 flex flex-col items-center gap-4">
+        {/* Quick Rematch - Primary Action */}
+        <Button
+          size="lg"
+          onClick={handleQuickRematch}
+          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8"
+        >
+          ⚡ Quick Rematch (Same Teams, New Scenarios)
         </Button>
-        <Button size="lg" onClick={handleNewGame}>
-          New Game
-        </Button>
+
+        {/* Secondary Actions */}
+        <div className="flex gap-4">
+          <Button variant="secondary" onClick={handlePlayAgain}>
+            Change Settings
+          </Button>
+          <Button variant="secondary" onClick={handleNewGame}>
+            New Game
+          </Button>
+        </div>
       </div>
     </div>
   );
