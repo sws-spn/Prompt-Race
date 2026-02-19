@@ -154,14 +154,14 @@ export function PracticeResultsScreen() {
               <h4 className="text-sm font-semibold text-amber-300">Why the Gold Standard Excels</h4>
 
               {[
-                { key: 'context', label: 'Context', color: 'blue' },
-                { key: 'taskClarity', label: 'Task Clarity', color: 'green' },
-                { key: 'constraintsFormat', label: 'Constraints & Format', color: 'purple' },
-                { key: 'aupAwareness', label: 'AUP Awareness', color: 'amber' },
-                { key: 'practicalValue', label: 'Practical Value', color: 'rose' },
-              ].map(({ key, label, color }) => (
-                <div key={key} className={`p-2 bg-slate-900/50 rounded border-l-4 border-${color}-500`}>
-                  <span className={`text-${color}-400 font-medium text-sm`}>{label}</span>
+                { key: 'context', label: 'Context', borderClass: 'border-blue-500', textClass: 'text-blue-400' },
+                { key: 'taskClarity', label: 'Task Clarity', borderClass: 'border-green-500', textClass: 'text-green-400' },
+                { key: 'constraintsFormat', label: 'Constraints & Format', borderClass: 'border-purple-500', textClass: 'text-purple-400' },
+                { key: 'aupAwareness', label: 'AUP Awareness', borderClass: 'border-amber-500', textClass: 'text-amber-400' },
+                { key: 'practicalValue', label: 'Practical Value', borderClass: 'border-rose-500', textClass: 'text-rose-400' },
+              ].map(({ key, label, borderClass, textClass }) => (
+                <div key={key} className={`p-2 bg-slate-900/50 rounded border-l-4 ${borderClass}`}>
+                  <span className={`${textClass} font-medium text-sm`}>{label}</span>
                   <p className="text-slate-300 text-xs mt-1">
                     {scenario.examplePrompt.breakdown[key as keyof typeof scenario.examplePrompt.breakdown]}
                   </p>

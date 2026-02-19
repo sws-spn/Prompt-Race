@@ -144,17 +144,17 @@ export function MainMenu() {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: 'troubleshooting' as Category, label: 'Troubleshooting', color: 'red' },
-                  { id: 'client-communication' as Category, label: 'Client Comms', color: 'blue' },
-                  { id: 'documentation' as Category, label: 'Documentation', color: 'green' },
-                  { id: 'research' as Category, label: 'Research', color: 'purple' },
+                  { id: 'troubleshooting' as Category, label: 'Troubleshooting', activeClass: 'bg-red-500/20 border-red-500/50 text-red-400' },
+                  { id: 'client-communication' as Category, label: 'Client Comms', activeClass: 'bg-blue-500/20 border-blue-500/50 text-blue-400' },
+                  { id: 'documentation' as Category, label: 'Documentation', activeClass: 'bg-green-500/20 border-green-500/50 text-green-400' },
+                  { id: 'research' as Category, label: 'Research', activeClass: 'bg-purple-500/20 border-purple-500/50 text-purple-400' },
                 ].map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => togglePracticeCategory(cat.id)}
                     className={`py-2 px-3 rounded-lg border text-sm transition-colors ${
                       practiceCategories.includes(cat.id)
-                        ? `bg-${cat.color}-500/20 border-${cat.color}-500/50 text-${cat.color}-400`
+                        ? cat.activeClass
                         : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-500'
                     }`}
                   >

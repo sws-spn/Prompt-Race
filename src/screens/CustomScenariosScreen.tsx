@@ -9,17 +9,17 @@ import {
 } from '../lib/storage';
 import type { Scenario, Category, Difficulty } from '../types';
 
-const CATEGORIES: { id: Category; label: string; color: string }[] = [
-  { id: 'troubleshooting', label: 'Troubleshooting', color: 'red' },
-  { id: 'client-communication', label: 'Client Communication', color: 'blue' },
-  { id: 'documentation', label: 'Documentation', color: 'green' },
-  { id: 'research', label: 'Research', color: 'purple' },
+const CATEGORIES: { id: Category; label: string; badgeClass: string }[] = [
+  { id: 'troubleshooting', label: 'Troubleshooting', badgeClass: 'bg-red-500/20 text-red-400' },
+  { id: 'client-communication', label: 'Client Communication', badgeClass: 'bg-blue-500/20 text-blue-400' },
+  { id: 'documentation', label: 'Documentation', badgeClass: 'bg-green-500/20 text-green-400' },
+  { id: 'research', label: 'Research', badgeClass: 'bg-purple-500/20 text-purple-400' },
 ];
 
-const DIFFICULTY_OPTIONS: { value: Difficulty; label: string; color: string }[] = [
-  { value: 1, label: 'Easy', color: 'green' },
-  { value: 2, label: 'Medium', color: 'yellow' },
-  { value: 3, label: 'Hard', color: 'red' },
+const DIFFICULTY_OPTIONS: { value: Difficulty; label: string; badgeClass: string }[] = [
+  { value: 1, label: 'Easy', badgeClass: 'bg-green-500/20 text-green-400' },
+  { value: 2, label: 'Medium', badgeClass: 'bg-yellow-500/20 text-yellow-400' },
+  { value: 3, label: 'Hard', badgeClass: 'bg-red-500/20 text-red-400' },
 ];
 
 interface ScenarioFormData {
@@ -194,12 +194,12 @@ export function CustomScenariosScreen() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span
-                          className={`px-2 py-0.5 rounded text-xs bg-${catInfo?.color}-500/20 text-${catInfo?.color}-400`}
+                          className={`px-2 py-0.5 rounded text-xs ${catInfo?.badgeClass}`}
                         >
                           {catInfo?.label}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded text-xs bg-${diffInfo?.color}-500/20 text-${diffInfo?.color}-400`}
+                          className={`px-2 py-0.5 rounded text-xs ${diffInfo?.badgeClass}`}
                         >
                           {diffInfo?.label}
                         </span>
