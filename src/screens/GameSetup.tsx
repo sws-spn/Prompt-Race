@@ -118,7 +118,7 @@ export function GameSetup() {
             <div className="flex items-center gap-4">
               <input
                 type="range"
-                min={3}
+                min={1}
                 max={15}
                 value={settings.totalRounds}
                 onChange={(e) => setSettings({ ...settings, totalRounds: Number(e.target.value) })}
