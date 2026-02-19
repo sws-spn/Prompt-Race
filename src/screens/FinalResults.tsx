@@ -472,11 +472,18 @@ export function FinalResults() {
   };
 
   const generateExportText = () => {
-    let text = `# Prompt Race Results - Test These Prompts!\n\n`;
-    text += `Below are the scenarios and prompts from a Prompt Race game. For each scenario, try both prompts and see which one produces a better AI response.\n\n`;
+    let text = `# Prompt Race Results - AI Judge Request\n\n`;
+    text += `## Instructions for Claude\n\n`;
+    text += `You are an expert prompt engineering judge. Below are scenarios and prompts from a Prompt Race training game. For each round:\n\n`;
+    text += `1. **Score both prompts** independently using the rubric below (0-20 per criteria, 100 total)\n`;
+    text += `2. **Analyze each prompt** - identify what was done well and what could be improved\n`;
+    text += `3. **Declare a winner** for each round with a brief explanation\n`;
+    text += `4. **Provide coaching tips** - specific, actionable advice for improvement\n\n`;
+    text += `Please format your response with clear headings for each round, showing scores, analysis, and recommendations.\n\n`;
+    text += `---\n\n`;
 
     text += `## Scoring Rubric\n\n`;
-    text += `Each prompt was scored on 5 criteria (0-20 points each, 100 total):\n\n`;
+    text += `Each prompt is scored on 5 criteria (0-20 points each, 100 total):\n\n`;
     text += `| Criteria | Description |\n`;
     text += `|----------|-------------|\n`;
     text += `| **Context** | Did the prompt provide sufficient environmental and situational detail? Does the AI have what it needs to give a targeted response? |\n`;
@@ -487,22 +494,32 @@ export function FinalResults() {
 
     text += `**Scoring Guide:** 0-4 = Poor, 5-9 = Needs work, 10-14 = Good, 15-20 = Excellent\n\n`;
     text += `---\n\n`;
+    text += `## Game Data\n\n`;
+    text += `**${state.settings.team1Name}** vs **${state.settings.team2Name}** · ${state.settings.totalRounds} rounds\n\n`;
+    text += `---\n\n`;
 
     state.roundResults.forEach((result, index) => {
       text += `## Round ${index + 1}: ${result.scenario.title}\n\n`;
-      text += `**Scenario:**\n${result.scenario.situation}\n\n`;
-      text += `---\n\n`;
+      text += `**Category:** ${result.scenario.category} | **Difficulty:** ${result.scenario.difficulty}/3\n\n`;
+      text += `**Scenario:**\n> ${result.scenario.situation}\n\n`;
+      if (result.scenario.roleHint) {
+        text += `*Hint: ${result.scenario.roleHint}*\n\n`;
+      }
 
-      text += `### ${state.settings.team1Name}'s Prompt (Total: ${result.team1Score.total}/100)\n\n`;
-      text += `**Scores:** Context: ${result.team1Score.context}/20 | Task Clarity: ${result.team1Score.taskClarity}/20 | Constraints: ${result.team1Score.constraintsFormat}/20 | AUP: ${result.team1Score.aupAwareness}/20 | Practical: ${result.team1Score.practicalValue}/20\n\n`;
-      text += `**Prompt:**\n${result.team1Prompt}\n\n`;
-      text += `---\n\n`;
+      text += `### ${state.settings.team1Name}'s Prompt:\n\`\`\`\n${result.team1Prompt}\n\`\`\`\n\n`;
 
-      text += `### ${state.settings.team2Name}'s Prompt (Total: ${result.team2Score.total}/100)\n\n`;
-      text += `**Scores:** Context: ${result.team2Score.context}/20 | Task Clarity: ${result.team2Score.taskClarity}/20 | Constraints: ${result.team2Score.constraintsFormat}/20 | AUP: ${result.team2Score.aupAwareness}/20 | Practical: ${result.team2Score.practicalValue}/20\n\n`;
-      text += `**Prompt:**\n${result.team2Prompt}\n\n`;
+      text += `### ${state.settings.team2Name}'s Prompt:\n\`\`\`\n${result.team2Prompt}\n\`\`\`\n\n`;
+
       text += `---\n\n`;
     });
+
+    text += `## Summary Request\n\n`;
+    text += `After scoring all rounds, please provide:\n\n`;
+    text += `1. **Final Scores** - Total points for each team across all rounds\n`;
+    text += `2. **Overall Winner** - Which team wrote better prompts overall\n`;
+    text += `3. **Strengths & Weaknesses** - Key patterns you noticed for each team\n`;
+    text += `4. **Top Teaching Moments** - The 2-3 most important lessons from this game\n`;
+    text += `5. **Improvement Priorities** - What each team should focus on practicing\n`;
 
     return text;
   };
@@ -703,18 +720,18 @@ export function FinalResults() {
         </div>
       </Card>
 
-      {/* Export Prompts for Testing */}
+      {/* Export Prompts for AI Judging */}
       <Card className="mt-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-white">Test Your Prompts</h3>
-            <p className="text-sm text-slate-400">Copy all scenarios and prompts to test in Claude</p>
+            <h3 className="text-lg font-bold text-white">Get AI Judge Feedback</h3>
+            <p className="text-sm text-slate-400">Copy and paste into Claude.ai for expert scoring and analysis</p>
           </div>
           <Button
             variant={copied ? 'primary' : 'secondary'}
             onClick={handleCopyAll}
           >
-            {copied ? 'Copied!' : 'Copy All'}
+            {copied ? 'Copied!' : 'Copy for Claude'}
           </Button>
         </div>
 
